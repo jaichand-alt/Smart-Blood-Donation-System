@@ -1,83 +1,113 @@
-# Agentic AI-Based Intelligent Blood Donor Coordination System
+# AI-Powered Smart Blood Donation and Management System
 
-A production-ready full-stack web application that coordinates blood donations autonomously during medical emergencies. Using an **Agentic AI architecture**, the system performs planning, reasoning, inventory checks, ranking, multi-channel outreach, and adaptive failover when donors are unavailable.
+A production-grade, centralized healthcare logistics and emergency blood coordination platform with four independent portals, real-time AI decision engines, and verified medical compliance.
 
-Seeded with real-world public healthcare sites across **Tamil Nadu, India** (Chennai, Coimbatore, Vellore, Madurai), and styled with a professional, high-performance medical theme.
-
----
-
-## 🚀 Key Features & Workflow
-
-1. **Hospital Emergency Dispatches**: Hospitals create requests specifying blood group, units, location, and urgency.
-2. **AI Autonomous Inventory Roster Check**: Before contacting donors, the AI sweeps blood bank inventories and automatically reserves compatible blocks, resolving the ticket instantly if stock exists.
-3. **Verified Donor Ranking & Scoring**: If stock is empty, the AI filters available donors by blood compatibility, biological eligibility (last donation date > 56 days), and distance. It computes matching scores:
-   $$\text{Score} = (W_d \times \text{Distance}) + (W_r \times \text{Reliability}) + (W_{rc} \times \text{Recency})$$
-4. **Outreach & Automated Timeout Escalation**: The AI contacts the top-ranked donor. If the donor declines or fails to respond within the configured timeout (e.g. 15-30 seconds for simulation), the AI penalizes the donor's reliability index and escalates immediately to the next candidate.
-5. **Supervised Medical Validation**: Once a donor accepts and arrives, hospital staff perform clinical screening. If the screening fails (e.g., low hemoglobin), the AI immediately restarts the donor search loop.
-6. **Real-time Map Visualizations**: Interactive Leaflet.js maps displaying hospitals, blood banks, and donors with dynamic vector lines tracking the active routing path.
-7. **AI Reasoning Logs & Audits**: Live terminal-style console displaying thoughts, calculations, status updates, and a complete system audit trail.
+Deployed on **Vercel** & configured for high-availability healthcare coordination across **Tamil Nadu, India** (Chennai, Madurai, Coimbatore, Vellore).
 
 ---
 
-## 🛠️ Technology Stack & Schema
+## 🏛️ System Architecture
 
-- **Frontend**: React + Vite, Lucide Icons, Leaflet Maps
-- **Database**: Connected to **Supabase** for user profiles, transaction ticketing, logs, and settings.
-- **Alternative Standalone**: Supports a zero-dependency high-fidelity browser emulation in [index.html](file:///c:/Users/tldde/OneDrive/Desktop/Intern%20Project/index.html) that runs completely inside the browser via localStorage persistence.
-
----
-
-## ⚡ Supabase Setup (Database Connectivity)
-
-1. Create a free project on [Supabase](https://supabase.com/).
-2. Go to the **SQL Editor** tab in your Supabase Dashboard.
-3. Copy the contents of [database.sql](file:///c:/Users/tldde/OneDrive/Desktop/Intern%20Project/database.sql) from the root of this project and paste it into the editor. Click **Run** to generate the tables, Row Level Security (RLS) policies, and seed values.
-4. Create a `.env` file inside the `/client` directory containing your project keys:
-   ```env
-   VITE_SUPABASE_URL=https://your-project-id.supabase.co
-   VITE_SUPABASE_ANON_KEY=your-anon-public-key
-   ```
-5. When Vite runs, it will automatically connect to your live Supabase cloud database. If these variables are not set, the application will automatically fall back to **Local Simulation Mode** so the app remains fully testable.
+```
+                    ┌────────────────────────────────────────────────────────┐
+                    │               Centralized State Engine                 │
+                    │   (Users, Hospitals, Banks, Donors, Inventory, Ledger)  │
+                    └───────────────────────────┬────────────────────────────┘
+                                                │
+         ┌───────────────────┬──────────────────┴────────────────┬───────────────────┐
+         │                   │                                   │                   │
+┌────────┴────────┐ ┌────────┴────────┐                 ┌────────┴────────┐ ┌────────┴────────┐
+│  Admin Portal   │ │ Hospital Portal │                 │  Donor Portal   │ │Blood Bank Portal│
+│ Control Center  │ │Emergency Orders │                 │Voluntary Roster │ │  Stock Manager  │
+└─────────────────┘ └─────────────────┘                 └─────────────────┘ └─────────────────┘
+```
 
 ---
 
-## 🚦 Quick Start Guide
+## 🚀 Key Features by Portal
 
-### Installation
+### 1. 👑 Central Administrator Control Centre
+- **Real-Time Ecosystem Overview**: Live counts of registered donors, hospitals, blood banks, available units across all 8 blood groups, active emergency tickets, and online sessions.
+- **User Verification & Approvals**: Non-admin registrations (hospitals, blood banks, donors) enter `pending_approval` and require explicit admin verification before login is permitted. Admin accounts cannot be publicly registered.
+- **AI Recommendation Centre**: Evaluates emergency hospital requests against real-time blood bank inventories and GPS coordinates. Admins can approve the AI recommendation or override with an alternative bank.
+- **AI Analytics & Shortage Forecasting**: Interactive bar distribution across 8 blood groups plus a 30-day predictive shortage forecasting model.
+- **Compliance Audit Ledger & Reports**: Immutable activity trail of all submissions, dispatches, and approvals with 1-click **CSV export**.
+- **Interactive Geospatial Network Map**: Embedded Leaflet.js map plotting all hospitals, blood banks, and donors.
 
-1. In the project root directory, run the installation script:
-   ```bash
-   npm run install:all
-   ```
-   *This command will install package dependencies for both the `/client` and `/server` workspaces.*
+### 2. 🏥 Hospital Emergency Dispatch Portal
+- **Broadcast Emergency Request**: Request blood by group, required units, urgency (`Normal`, `Urgent`, `Emergency`), and patient reference ID.
+- **Autonomous AI Matching Trigger**: Automatically initiates inventory checks and donor pool ranking upon submission.
+- **Hospital Blood Inventory Manager**: Track and adjust on-site surgical reserve stock.
+- **Multi-Stage Order Tracking**: Real-time progression tracker from submission to fulfillment.
 
-### Running the Application
+### 3. 🩸 Voluntary Blood Donor Portal
+- **Donor Digital Pass**: Displays verified blood group, reliability index, rest period, and past donation history.
+- **Live Availability Switch**: Real-time toggle (`Available to Donate 🟢` vs `Currently Unavailable 🔴`).
+- **AI Health Pre-Screening**: Evaluates age (18–65), weight ($\ge 50\text{ kg}$), donation interval ($\ge 56\text{ days}$), chronic conditions, and medications:
+  - 🟢 **GREEN**: No obvious eligibility concerns identified.
+  - 🟡 **YELLOW**: Additional pre-donation clinical check required.
+  - 🔴 **RED**: Temporary or absolute deferral.
+- **Incoming Emergency Dispatches**: Compatible requests within distance with Accept and Decline actions.
 
-To start the local developer server, run:
-   ```bash
-   npm run dev
-   ```
-- The **Frontend App** will launch at: `http://localhost:3000`
-- The **Backend API** will run at: `http://localhost:5000`
+### 4. 🏦 Blood Bank Repository Portal
+- **8-Blood Group Stock Manager**: Real-time units adjuster for $A^+, A^-, B^+, B^-, AB^+, AB^-, O^+, O^-$.
+- **Admin-Approved Emergency Orders**: Receive emergency hospital dispatch authorizations with 1-click fulfillment.
+- **Transaction-Safe Ledger**: Automatically logs additions, reserves, and deductions to prevent double allocation.
 
 ---
 
-## 🧑‍🤝‍🧑 Presets for Testing (Credentials)
+## 🤖 Core AI Decision Engines
 
-Use the built-in preset login cards on the login screen to sign in instantly with simulated roles:
+### A. Closest Blood Bank Recommendation Engine
+Calculates the optimal source for an emergency hospital ticket:
+1. Calculates actual distance via the **Haversine formula** using hospital and blood bank GPS coordinates.
+2. Estimates transit time based on urban emergency routing ($T = \text{round}((\text{dist} / 35) \times 60 + 5)\text{ minutes}$).
+3. Verifies inventory sufficiency across all medically compatible blood groups.
+4. Generates an explainable reasoning summary for admin review.
 
-| Role | Username | Password | Institution / Location |
+### B. Multi-Criteria Donor Ranking Algorithm
+$$\text{Score} = (W_d \times \text{Distance}) + (W_r \times \text{Reliability}) + (W_{rc} \times \text{Recency})$$
+- Default weights: Distance 40%, Reliability 30%, Recency 30%.
+- Filters out unavailable or medically deferred donors.
+
+---
+
+## 🧑‍💻 Built-In Testing Credentials
+
+Use the quick-fill cards on the login screen or enter manually:
+
+| Portal | Email | Password | Role Description |
 | :--- | :--- | :--- | :--- |
-| **Hospital** | `hospital1` | `hosp123` | Rajiv Gandhi Government General Hospital (Chennai) |
-| **Blood Donor** | `johndoe` | `donor123` | John Doe (Chennai Central - O+ Roster Donor) |
-| **Blood Bank** | `bloodbank1` | `bank123` | Chennai Red Cross Blood Bank (Egmore) |
-| **Administrator** | `admin` | `admin123` | System Administrator (Weights & parameters tuner) |
+| **Admin** | `admin@bloodcoop.gov.in` | `admin123` | State Health Director (Central Control) |
+| **Hospital** | `hospital1@rggh.gov.in` | `hosp123` | Rajiv Gandhi Govt General Hospital (Chennai) |
+| **Blood Bank** | `bloodbank1@redcrosschennai.org` | `bank123` | Chennai Red Cross Blood Bank (Egmore) |
+| **Donor** | `johndoe@gmail.com` | `donor123` | John Doe (O+ Roster Donor, Chennai Central) |
 
 ---
 
-## 🧠 Live Simulator Controls
+## ⚡ Quick Start & Testing
 
-To make review easy, the **AI Coordination Console** on the hospital dashboard includes live simulation buttons:
-- **Force Accept**: Simulates the active donor clicking "Accept" on their phone, triggering the AI to advance the request to the screening phase.
-- **Force Decline**: Simulates the active donor declining, causing the AI to adapt its plan and immediately contact the second-best candidate.
-- **Simulate Timeout**: Triggers a timeout, causing the AI to lower the donor's reliability rating by 5% and advance to the next candidate.
+### Run Locally
+```bash
+# Start zero-dependency HTTP server
+node server.js
+# Or
+npm start
+```
+Open **`http://localhost:3000`** in any web browser.
+
+### Run Automated Test Suite
+```bash
+npm test
+```
+Verifies authentication, registration approval barriers, request creation, AI blood bank recommendations, preliminary donor screening, inventory deductions, and audit logging.
+
+---
+
+## ☁️ Vercel Deployment
+
+Configured with `vercel.json` for zero-configuration, production-grade deployment on Vercel:
+```bash
+npx vercel
+```
+Or connect your GitHub repository directly to Vercel for automated CI/CD deployments on `main`.
