@@ -1,0 +1,1641 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agentic AI Blood Donor Coordinator</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            heading: ['Outfit', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#fef2f2',
+              500: '#ef4444',
+              600: '#dc2626',
+              700: '#b91c1c',
+            },
+            teal: {
+              500: '#14b8a6',
+              600: '#0d9488',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Leaflet Map CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+  <style>
+    /* Custom scrollbar for terminal */
+    .terminal-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .terminal-scroll::-webkit-scrollbar-track {
+      background: #030712;
+    }
+    .terminal-scroll::-webkit-scrollbar-thumb {
+      background: #374151;
+      border-radius: 3px;
+    }
+    .terminal-scroll::-webkit-scrollbar-thumb:hover {
+      background: #4b5563;
+    }
+
+    /* Pulse radar effect */
+    @keyframes radar-pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 14px rgba(239, 68, 68, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+    .radar-beacon {
+      animation: radar-pulse 2s infinite;
+    }
+
+    /* Custom Leaflet Map styling */
+    .leaflet-container {
+      background-color: #0b0f19 !important;
+      font-family: 'Inter', sans-serif !important;
+    }
+    .leaflet-popup-content-wrapper {
+      background: #111827 !important;
+      color: #f3f4f6 !important;
+      border: 1px solid rgba(255,255,255,0.1) !important;
+      border-radius: 8px !important;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+    }
+    .leaflet-popup-tip {
+      background: #111827 !important;
+    }
+  </style>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 min-h-screen flex flex-col font-sans selection:bg-red-600 selection:text-white">
+
+  <!-- TOP HEADER / PRESET SWITCHER BAR -->
+  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+      
+      <!-- Logo & System Badge -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-red-600 to-rose-400 flex items-center justify-center shadow-lg shadow-red-900/40 text-white text-lg">
+          <i class="fa-solid fa-droplet animate-pulse"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-heading font-extrabold text-xl tracking-tight text-white">ANTIGRAVITY BLOOD CO-OP</h1>
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> Agentic AI Live
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 font-medium">Autonomous Emergency Donor Coordination System &bull; Tamil Nadu Network</p>
+        </div>
+      </div>
+
+      <!-- Preset Switcher Pills -->
+      <div class="flex items-center gap-2 bg-slate-950/80 p-1.5 rounded-xl border border-slate-800">
+        <span class="text-xs text-slate-400 font-semibold px-2 flex items-center gap-1">
+          <i class="fa-solid fa-id-badge text-slate-500"></i> Role:
+        </span>
+        
+        <button onclick="switchRole('hospital')" id="role-btn-hospital" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 bg-red-600 text-white shadow-sm shadow-red-700/50">
+          <i class="fa-solid fa-hospital"></i> Hospital
+        </button>
+
+        <button onclick="switchRole('donor')" id="role-btn-donor" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 text-slate-400 hover:text-white hover:bg-slate-800">
+          <i class="fa-solid fa-user"></i> Donor View <span id="donor-notif-pill" class="hidden w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+        </button>
+
+        <button onclick="switchRole('bloodbank')" id="role-btn-bloodbank" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 text-slate-400 hover:text-white hover:bg-slate-800">
+          <i class="fa-solid fa-boxes-stacked"></i> Blood Bank
+        </button>
+
+        <button onclick="switchRole('admin')" id="role-btn-admin" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 text-slate-400 hover:text-white hover:bg-slate-800">
+          <i class="fa-solid fa-sliders"></i> AI Settings & Logs
+        </button>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2">
+        <button onclick="resetDemoData()" title="Reset all demo data to default Tamil Nadu network state" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-rotate-right"></i> Reset Demo Data
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN VIEWPORT CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+
+    <!-- ACTIVE ROLE BANNER / CREDENTIALS INDICATOR -->
+    <div id="role-context-banner" class="bg-slate-900/60 border border-slate-800 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div class="flex items-center gap-2.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+        <span class="text-slate-400">Signed In As:</span>
+        <span id="current-user-display" class="font-semibold text-white bg-slate-800 px-2 py-0.5 rounded border border-slate-700">Rajiv Gandhi Govt General Hospital (Chennai)</span>
+        <span id="current-role-badge" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-950 text-red-400 border border-red-800">HOSPITAL DISPATCHER</span>
+      </div>
+      <div class="text-slate-400 flex items-center gap-3">
+        <span><i class="fa-solid fa-database text-teal-400 mr-1"></i> Persistence: <strong class="text-slate-200">LocalStorage Active</strong></span>
+        <span>&bull;</span>
+        <span><i class="fa-solid fa-bolt text-amber-400 mr-1"></i> Esc. Timeout: <strong id="banner-timeout-val" class="text-slate-200">30s</strong></span>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- VIEW 1: HOSPITAL DISPATCH & REAL-TIME COORDINATION CONSOLE    -->
+    <!-- ============================================================== -->
+    <div id="view-hospital" class="space-y-6">
+      
+      <!-- Top Row: Dispatch Form & Active Status Panel -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left: Emergency Dispatch Trigger (5 cols) -->
+        <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-red-950 border border-red-800/80 text-red-500 flex items-center justify-center">
+                  <i class="fa-solid fa-truck-medical"></i>
+                </div>
+                <div>
+                  <h2 class="font-heading font-bold text-lg text-white">Emergency Blood Request</h2>
+                  <p class="text-xs text-slate-400">Trigger autonomous AI search & multi-channel routing</p>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-red-500/10 text-red-400 border border-red-500/20">Step 1</span>
+            </div>
+
+            <form id="emergency-form" onsubmit="handleCreateRequest(event)" class="space-y-4">
+              <!-- Hospital Selector -->
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Requesting Medical Facility</label>
+                <select id="req-hospital" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:border-red-500">
+                  <option value="rggh">Rajiv Gandhi Govt General Hospital (Chennai)</option>
+                  <option value="apollo">Apollo Hospital, Greams Road (Chennai)</option>
+                  <option value="cmc">Christian Medical College (Vellore)</option>
+                  <option value="cmch">Coimbatore Medical College Hospital (Coimbatore)</option>
+                  <option value="rajaji">Govt Rajaji Hospital (Madurai)</option>
+                </select>
+              </div>
+
+              <!-- Blood Group & Units Row -->
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Blood Group Needed</label>
+                  <select id="req-blood-group" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-slate-100 font-bold focus:outline-none focus:border-red-500">
+                    <option value="O+">O+ (Positive)</option>
+                    <option value="O-">O- (Universal Donor)</option>
+                    <option value="A+">A+ (Positive)</option>
+                    <option value="A-">A- (Negative)</option>
+                    <option value="B+">B+ (Positive)</option>
+                    <option value="B-">B- (Negative)</option>
+                    <option value="AB+">AB+ (Universal Recipient)</option>
+                    <option value="AB-">AB- (Negative)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-300 mb-1">Required Units</label>
+                  <input type="number" id="req-units" min="1" max="10" value="2" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:border-red-500" required />
+                </div>
+              </div>
+
+              <!-- Urgency Level -->
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Triage Urgency Level</label>
+                <div class="grid grid-cols-3 gap-2">
+                  <label class="flex items-center justify-center gap-1.5 p-2 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-600 transition text-xs font-medium text-slate-300">
+                    <input type="radio" name="urgency" value="medium" class="text-amber-500 focus:ring-0"> Medium
+                  </label>
+                  <label class="flex items-center justify-center gap-1.5 p-2 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-600 transition text-xs font-medium text-amber-400">
+                    <input type="radio" name="urgency" value="high" class="text-amber-500 focus:ring-0"> High
+                  </label>
+                  <label class="flex items-center justify-center gap-1.5 p-2 bg-red-950/40 border border-red-800/80 rounded-xl cursor-pointer hover:border-red-600 transition text-xs font-bold text-red-400">
+                    <input type="radio" name="urgency" value="critical" checked class="text-red-500 focus:ring-0"> Critical
+                  </label>
+                </div>
+              </div>
+
+              <button type="submit" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-heading font-bold text-sm tracking-wide shadow-lg shadow-red-900/50 flex items-center justify-center gap-2 transition active:scale-[0.99]">
+                <i class="fa-solid fa-bolt"></i> Trigger Autonomous AI Dispatch
+              </button>
+            </form>
+          </div>
+
+          <!-- Helper hint -->
+          <div class="mt-4 pt-3 border-t border-slate-800/80 text-[11px] text-slate-400 flex items-center gap-2">
+            <i class="fa-solid fa-circle-info text-teal-400"></i>
+            <span>The AI will autonomously verify blood banks first, then rank & dispatch verified roster donors.</span>
+          </div>
+        </div>
+
+        <!-- Right: Active AI Coordination Status & Simulator Controls (7 cols) -->
+        <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-teal-950 border border-teal-800/80 text-teal-400 flex items-center justify-center">
+                  <i class="fa-solid fa-robot"></i>
+                </div>
+                <div>
+                  <h2 class="font-heading font-bold text-lg text-white">Live AI Coordination Console</h2>
+                  <p class="text-xs text-slate-400">Real-time status tracker, failover controls & clinical screening</p>
+                </div>
+              </div>
+              <span id="active-status-badge" class="px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-800 text-slate-400 border border-slate-700">
+                Idle / Ready
+              </span>
+            </div>
+
+            <!-- Workflow Visual Stepper -->
+            <div class="bg-slate-950/80 rounded-xl p-3 border border-slate-800 mb-4">
+              <div class="flex items-center justify-between text-[11px] font-medium text-slate-400 relative">
+                <div class="text-center flex-1">
+                  <div id="step-node-1" class="w-6 h-6 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center mx-auto mb-1 border border-slate-700 font-bold">1</div>
+                  <span>Dispatch</span>
+                </div>
+                <div class="h-0.5 flex-1 bg-slate-800" id="step-line-1"></div>
+                <div class="text-center flex-1">
+                  <div id="step-node-2" class="w-6 h-6 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center mx-auto mb-1 border border-slate-700 font-bold">2</div>
+                  <span>Inventory</span>
+                </div>
+                <div class="h-0.5 flex-1 bg-slate-800" id="step-line-2"></div>
+                <div class="text-center flex-1">
+                  <div id="step-node-3" class="w-6 h-6 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center mx-auto mb-1 border border-slate-700 font-bold">3</div>
+                  <span>Ranking</span>
+                </div>
+                <div class="h-0.5 flex-1 bg-slate-800" id="step-line-3"></div>
+                <div class="text-center flex-1">
+                  <div id="step-node-4" class="w-6 h-6 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center mx-auto mb-1 border border-slate-700 font-bold">4</div>
+                  <span>Outreach</span>
+                </div>
+                <div class="h-0.5 flex-1 bg-slate-800" id="step-line-4"></div>
+                <div class="text-center flex-1">
+                  <div id="step-node-5" class="w-6 h-6 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center mx-auto mb-1 border border-slate-700 font-bold">5</div>
+                  <span>Screening</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Active Target Info Box -->
+            <div id="active-coordination-card" class="bg-slate-950 border border-slate-800 rounded-xl p-4 mb-4">
+              <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+                <span>Active Candidate Target:</span>
+                <span id="countdown-timer-display" class="font-mono text-amber-400 font-bold text-sm">--</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 id="active-target-name" class="font-bold text-white text-base">No Active Request</h4>
+                  <p id="active-target-desc" class="text-xs text-slate-400">Trigger a request above to initialize autonomous agent flow.</p>
+                </div>
+                <div id="active-target-stats" class="text-right text-xs">
+                  <!-- Injected details -->
+                </div>
+              </div>
+
+              <!-- Progress bar for countdown -->
+              <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3 overflow-hidden">
+                <div id="timeout-progress-bar" class="bg-amber-400 h-full w-0 transition-all duration-1000"></div>
+              </div>
+            </div>
+
+            <!-- SIMULATOR CONTROL BUTTONS (as highlighted in README) -->
+            <div class="space-y-2">
+              <span class="text-[11px] font-semibold text-slate-400 flex items-center gap-1.5">
+                <i class="fa-solid fa-gamepad text-indigo-400"></i> Live AI Simulator Controls (README Presets):
+              </span>
+              <div class="grid grid-cols-3 gap-2.5">
+                <button onclick="simulateForceAccept()" id="btn-force-accept" disabled class="py-2.5 px-3 rounded-xl bg-emerald-950/60 hover:bg-emerald-900 border border-emerald-800/80 disabled:opacity-40 disabled:cursor-not-allowed text-emerald-400 font-semibold text-xs transition flex flex-col items-center justify-center gap-1">
+                  <span class="flex items-center gap-1"><i class="fa-solid fa-check"></i> Force Accept</span>
+                  <span class="text-[10px] text-emerald-500/80 font-normal">Donor accepts phone alert</span>
+                </button>
+
+                <button onclick="simulateForceDecline()" id="btn-force-decline" disabled class="py-2.5 px-3 rounded-xl bg-rose-950/60 hover:bg-rose-900 border border-rose-800/80 disabled:opacity-40 disabled:cursor-not-allowed text-rose-400 font-semibold text-xs transition flex flex-col items-center justify-center gap-1">
+                  <span class="flex items-center gap-1"><i class="fa-solid fa-xmark"></i> Force Decline</span>
+                  <span class="text-[10px] text-rose-500/80 font-normal">Donor rejects; AI failover</span>
+                </button>
+
+                <button onclick="simulateTimeout()" id="btn-simulate-timeout" disabled class="py-2.5 px-3 rounded-xl bg-amber-950/60 hover:bg-amber-900 border border-amber-800/80 disabled:opacity-40 disabled:cursor-not-allowed text-amber-400 font-semibold text-xs transition flex flex-col items-center justify-center gap-1">
+                  <span class="flex items-center gap-1"><i class="fa-solid fa-stopwatch"></i> Simulate Timeout</span>
+                  <span class="text-[10px] text-amber-500/80 font-normal">-5% penalty & escalate</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- CLINICAL SCREENING PANEL (Visible when donor is accepted and arrives) -->
+            <div id="clinical-screening-panel" class="hidden mt-4 p-4 rounded-xl bg-teal-950/40 border border-teal-800">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                  <i class="fa-solid fa-stethoscope text-teal-400 text-lg"></i>
+                  <h4 class="font-heading font-bold text-sm text-teal-300">Hospital Medical Screening & Validation</h4>
+                </div>
+                <span class="text-[10px] bg-teal-900 text-teal-300 px-2 py-0.5 rounded border border-teal-700">Donor Arrived</span>
+              </div>
+              <p class="text-xs text-slate-300 mb-3">Donor has arrived at the hospital. Verify hemoglobin and clinical eligibility before blood withdrawal.</p>
+              
+              <div class="grid grid-cols-3 gap-2 text-xs mb-3">
+                <div class="bg-slate-900 p-2 rounded-lg border border-slate-800">
+                  <span class="text-slate-400 text-[10px] block">Hemoglobin</span>
+                  <strong class="text-white text-sm">13.8 g/dL</strong> <span class="text-emerald-400 text-[10px]">(≥12.5)</span>
+                </div>
+                <div class="bg-slate-900 p-2 rounded-lg border border-slate-800">
+                  <span class="text-slate-400 text-[10px] block">Blood Pressure</span>
+                  <strong class="text-white text-sm">120 / 80</strong> <span class="text-emerald-400 text-[10px]">Normal</span>
+                </div>
+                <div class="bg-slate-900 p-2 rounded-lg border border-slate-800">
+                  <span class="text-slate-400 text-[10px] block">Weight</span>
+                  <strong class="text-white text-sm">68 kg</strong> <span class="text-emerald-400 text-[10px]">(≥50kg)</span>
+                </div>
+              </div>
+
+              <div class="flex gap-2">
+                <button onclick="approveScreening()" class="flex-1 py-2 px-3 bg-teal-600 hover:bg-teal-500 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-md shadow-teal-900/50">
+                  <i class="fa-solid fa-circle-check"></i> Approve & Complete Ticket
+                </button>
+                <button onclick="failScreening()" class="py-2 px-3 bg-red-950 hover:bg-red-900 text-red-300 border border-red-800 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5">
+                  <i class="fa-solid fa-triangle-exclamation"></i> Fail (Low Hb <12.5)
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Middle Row: Leaflet Map & Live AI Terminal Logs -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Interactive Map (7 cols) -->
+        <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
+          <div class="flex items-center justify-between mb-3 px-2">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-map-location-dot text-red-500"></i>
+              <h3 class="font-heading font-bold text-sm text-white">Geospatial Routing & Node Network</h3>
+            </div>
+            <div class="flex items-center gap-3 text-xs text-slate-400">
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-600"></span> Hospital</span>
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Blood Bank</span>
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Donor</span>
+            </div>
+          </div>
+          
+          <div id="map" class="h-96 w-full rounded-xl border border-slate-800 overflow-hidden relative"></div>
+        </div>
+
+        <!-- AI Reasoning Logs Terminal (5 cols) -->
+        <div class="lg:col-span-5 bg-slate-950 border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col font-mono">
+          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+            <div class="flex items-center gap-2">
+              <div class="flex gap-1.5">
+                <span class="w-3 h-3 rounded-full bg-red-500/80 inline-block"></span>
+                <span class="w-3 h-3 rounded-full bg-amber-500/80 inline-block"></span>
+                <span class="w-3 h-3 rounded-full bg-emerald-500/80 inline-block"></span>
+              </div>
+              <span class="text-xs font-bold text-slate-300 ml-1">AI Reasoning Logs (Agent Terminal)</span>
+            </div>
+            <button onclick="clearTerminalLogs()" title="Clear Logs" class="text-slate-500 hover:text-slate-300 text-xs">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+
+          <!-- Terminal Content Box -->
+          <div id="ai-terminal-output" class="terminal-scroll flex-1 overflow-y-auto space-y-2 text-xs leading-relaxed max-h-80 pr-2">
+            <!-- Initial Boot Messages -->
+            <div class="text-slate-500">[SYSTEM] Agentic Blood Coordination Engine initialized.</div>
+            <div class="text-slate-500">[GEOSPATIAL] Tamil Nadu regional coordinates mapped. 5 hospitals, 4 blood banks, 9 registered donors.</div>
+            <div class="text-teal-400">[READY] Autonomous planner listening for emergency dispatch events...</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Row: Emergency Tickets Table -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-heading font-bold text-base text-white flex items-center gap-2">
+            <i class="fa-solid fa-clipboard-list text-slate-400"></i> Dispatch Registry & Tickets Ledger
+          </h3>
+          <span id="ticket-count-badge" class="px-2 py-0.5 rounded text-xs bg-slate-800 text-slate-300 border border-slate-700">0 Active</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="text-slate-400 bg-slate-950/60 uppercase font-semibold border-b border-slate-800">
+              <tr>
+                <th class="py-3 px-4">Ticket ID</th>
+                <th class="py-3 px-4">Hospital</th>
+                <th class="py-3 px-4">Blood Group</th>
+                <th class="py-3 px-4">Units</th>
+                <th class="py-3 px-4">Urgency</th>
+                <th class="py-3 px-4">Fulfillment Channel</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4">Timestamp</th>
+              </tr>
+            </thead>
+            <tbody id="dispatches-table-body" class="divide-y divide-slate-800">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- VIEW 2: DONOR MOBILE PHONE SIMULATION VIEW                    -->
+    <!-- ============================================================== -->
+    <div id="view-donor" class="hidden max-w-md mx-auto space-y-6">
+      
+      <!-- Mobile Mock Frame -->
+      <div class="bg-slate-950 border-4 border-slate-800 rounded-[3rem] p-4 shadow-2xl overflow-hidden relative">
+        <!-- Phone Speaker/Cam Notch -->
+        <div class="w-32 h-4 bg-slate-800 rounded-full mx-auto mb-4"></div>
+
+        <!-- Phone Screen Content -->
+        <div class="space-y-4">
+          <!-- Donor Top Card -->
+          <div class="bg-gradient-to-r from-red-600 to-rose-700 rounded-2xl p-4 text-white shadow-lg">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs uppercase font-bold tracking-wider opacity-80">Donor Digital Pass</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/20">Verified</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-xl font-heading font-extrabold" id="donor-profile-name">John Doe</h3>
+                <p class="text-xs opacity-90" id="donor-profile-loc">Chennai Central, Tamil Nadu</p>
+              </div>
+              <div class="w-12 h-12 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center font-heading font-black text-xl">
+                O+
+              </div>
+            </div>
+          </div>
+
+          <!-- Donor Vitals & Eligibility -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 text-center">
+              <span class="text-[10px] text-slate-400 uppercase font-semibold block">Reliability Score</span>
+              <strong id="donor-profile-reliability" class="text-lg font-heading font-bold text-emerald-400">95%</strong>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 text-center">
+              <span class="text-[10px] text-slate-400 uppercase font-semibold block">Last Donated</span>
+              <strong class="text-lg font-heading font-bold text-slate-200">75d ago</strong>
+              <span class="text-[10px] text-emerald-400 block font-medium">Eligible (>56d)</span>
+            </div>
+          </div>
+
+          <!-- INCOMING EMERGENCY DISPATCH PUSH ALERT (Displayed when contacted) -->
+          <div id="donor-incoming-alert" class="hidden bg-red-950/80 border-2 border-red-600 rounded-2xl p-4 shadow-2xl shadow-red-900/50 radar-beacon">
+            <div class="flex items-center gap-2 text-red-400 font-bold text-xs uppercase mb-2">
+              <i class="fa-solid fa-triangle-exclamation animate-bounce"></i> Emergency Blood Dispatch Request!
+            </div>
+            <p class="text-sm font-semibold text-white mb-1" id="donor-alert-hospital">Rajiv Gandhi Govt General Hospital</p>
+            <p class="text-xs text-slate-300 mb-3">Requires <strong class="text-red-400">O+ Blood</strong> for immediate surgery trauma care.</p>
+            
+            <div class="flex items-center justify-between text-xs text-slate-400 bg-slate-950/60 p-2 rounded-lg mb-3">
+              <span>Distance to Site:</span>
+              <strong class="text-white" id="donor-alert-distance">2.4 km (~8 mins)</strong>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="simulateForceAccept()" class="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-heading font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-1">
+                <i class="fa-solid fa-check"></i> ACCEPT
+              </button>
+              <button onclick="simulateForceDecline()" class="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-heading font-semibold text-xs rounded-xl transition flex items-center justify-center gap-1">
+                <i class="fa-solid fa-xmark"></i> DECLINE
+              </button>
+            </div>
+          </div>
+
+          <!-- Empty alert placeholder -->
+          <div id="donor-no-alert" class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 text-center text-slate-400 space-y-2">
+            <i class="fa-solid fa-bell-slash text-2xl text-slate-600"></i>
+            <h4 class="text-sm font-semibold text-slate-300">No Pending Emergency Dispatches</h4>
+            <p class="text-xs">When hospitals trigger a request matching your blood group in Chennai, an autonomous dispatch notification will appear here.</p>
+          </div>
+
+          <!-- Past Donations History -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+            <h4 class="font-heading font-bold text-xs uppercase text-slate-400 mb-3 tracking-wider">Donation History</h4>
+            <div class="space-y-2.5 text-xs">
+              <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                <div>
+                  <p class="font-semibold text-slate-200">Rajiv Gandhi Govt Hospital</p>
+                  <p class="text-[10px] text-slate-400">75 days ago &bull; Emergency Trauma</p>
+                </div>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">1 Unit</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="font-semibold text-slate-200">Chennai Red Cross Blood Drive</p>
+                  <p class="text-[10px] text-slate-400">160 days ago &bull; Voluntary Camp</p>
+                </div>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">1 Unit</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- VIEW 3: BLOOD BANK INVENTORY REPOSITORY                       -->
+    <!-- ============================================================== -->
+    <div id="view-bloodbank" class="hidden space-y-6">
+      
+      <!-- Facility Header -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-xl bg-blue-950 border border-blue-800 text-blue-400 flex items-center justify-center text-xl">
+            <i class="fa-solid fa-boxes-stacked"></i>
+          </div>
+          <div>
+            <h2 class="font-heading font-extrabold text-xl text-white">Chennai Red Cross Blood Bank</h2>
+            <p class="text-xs text-slate-400">Egmore, Chennai &bull; Integrated Regional Stock Roster</p>
+          </div>
+        </div>
+        <div class="text-xs text-slate-400 bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center gap-3">
+          <span><i class="fa-solid fa-shield-halved text-teal-400 mr-1"></i> Autonomous Sweeps: <strong class="text-slate-200">Enabled</strong></span>
+          <span>&bull;</span>
+          <span>Total Units in Stock: <strong id="total-inventory-units" class="text-white font-bold">29</strong></span>
+        </div>
+      </div>
+
+      <!-- Inventory Grid Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4" id="inventory-grid">
+        <!-- Injected via JavaScript for A+, A-, B+, B-, O+, O-, AB+, AB- -->
+      </div>
+
+      <!-- AI Inventory Sweep Rules Note -->
+      <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 flex items-start gap-3 text-xs text-slate-300">
+        <i class="fa-solid fa-lightbulb text-amber-400 text-lg mt-0.5"></i>
+        <div>
+          <strong class="text-white block font-heading font-bold text-sm mb-1">Autonomous Blood Bank Reserve Protocol</strong>
+          Whenever an emergency dispatch is logged, the AI first scans nearby blood bank stocks before disturbing voluntary donors. If compatible inventory is available, the AI immediately reserves the units, dispatches an express transport order, and marks the emergency fulfilled within milliseconds!
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- VIEW 4: ADMIN CONSOLE, AI WEIGHT TUNER & AUDIT TRAIL          -->
+    <!-- ============================================================== -->
+    <div id="view-admin" class="hidden space-y-6">
+      
+      <!-- Top: Formula Weight Tuner -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-purple-950 border border-purple-800 text-purple-400 flex items-center justify-center text-lg">
+              <i class="fa-solid fa-sliders"></i>
+            </div>
+            <div>
+              <h2 class="font-heading font-bold text-lg text-white">AI Multi-Criteria Ranking Algorithm Parameters</h2>
+              <p class="text-xs text-slate-400">Tune the weights utilized by the Autonomous Agent when ranking candidates</p>
+            </div>
+          </div>
+          <button onclick="saveAlgorithmSettings()" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-heading font-bold text-xs rounded-xl shadow-lg shadow-purple-900/40 transition">
+            Save Parameters
+          </button>
+        </div>
+
+        <!-- Formula display box -->
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-xs text-teal-400">
+          $$\text{Candidate Score} = (W_d \times \text{DistanceScore}) + (W_r \times \text{Reliability}) + (W_{rc} \times \text{Recency})$$
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Distance Weight -->
+          <div class="space-y-2">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-300 font-semibold">Distance Weight (Wd)</span>
+              <span id="label-wd" class="font-bold text-purple-400">40%</span>
+            </div>
+            <input type="range" id="input-wd" min="10" max="80" value="40" oninput="updateWeightDisplay()" class="w-full accent-purple-500 cursor-pointer" />
+            <p class="text-[11px] text-slate-500">Prioritizes donors within closer geographic proximity to the hospital.</p>
+          </div>
+
+          <!-- Reliability Weight -->
+          <div class="space-y-2">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-300 font-semibold">Reliability Weight (Wr)</span>
+              <span id="label-wr" class="font-bold text-purple-400">30%</span>
+            </div>
+            <input type="range" id="input-wr" min="10" max="80" value="30" oninput="updateWeightDisplay()" class="w-full accent-purple-500 cursor-pointer" />
+            <p class="text-[11px] text-slate-500">Favors donors with reliable attendance and low past timeout rates.</p>
+          </div>
+
+          <!-- Recency Weight -->
+          <div class="space-y-2">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-300 font-semibold">Recency Weight (Wrc)</span>
+              <span id="label-wrc" class="font-bold text-purple-400">30%</span>
+            </div>
+            <input type="range" id="input-wrc" min="10" max="80" value="30" oninput="updateWeightDisplay()" class="w-full accent-purple-500 cursor-pointer" />
+            <p class="text-[11px] text-slate-500">Protects donor health by favoring those with longest rest since last donation.</p>
+          </div>
+        </div>
+
+        <!-- Timeout Setting -->
+        <div class="border-t border-slate-800 pt-4 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <span class="text-xs font-semibold text-slate-300 block">Outreach Escalation Timeout (Seconds)</span>
+            <span class="text-[11px] text-slate-500">Time allowed for a candidate to respond before auto-escalating to the next candidate.</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <input type="number" id="input-timeout" min="10" max="120" value="30" class="w-20 bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white text-center font-bold" />
+            <span class="text-xs text-slate-400">seconds</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Donors Roster Table -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <h3 class="font-heading font-bold text-base text-white mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-users text-slate-400"></i> Registered Voluntary Donors Roster
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="text-slate-400 bg-slate-950/60 uppercase font-semibold border-b border-slate-800">
+              <tr>
+                <th class="py-3 px-4">Donor Name</th>
+                <th class="py-3 px-4">Blood Group</th>
+                <th class="py-3 px-4">Location</th>
+                <th class="py-3 px-4">Reliability</th>
+                <th class="py-3 px-4">Last Donated</th>
+                <th class="py-3 px-4">Eligibility</th>
+                <th class="py-3 px-4">Contact</th>
+              </tr>
+            </thead>
+            <tbody id="admin-donors-table-body" class="divide-y divide-slate-800">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Audit Trail Table -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-heading font-bold text-base text-white flex items-center gap-2">
+            <i class="fa-solid fa-fingerprint text-slate-400"></i> System Audit Ledger (Compliance Trail)
+          </h3>
+          <button onclick="clearAuditTrail()" class="text-xs text-slate-500 hover:text-slate-300">Clear Ledger</button>
+        </div>
+        <div class="overflow-x-auto max-h-72 overflow-y-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="text-slate-400 bg-slate-950/60 uppercase font-semibold border-b border-slate-800 sticky top-0">
+              <tr>
+                <th class="py-2.5 px-4">Timestamp</th>
+                <th class="py-2.5 px-4">Actor</th>
+                <th class="py-2.5 px-4">Action</th>
+                <th class="py-2.5 px-4">Details</th>
+              </tr>
+            </thead>
+            <tbody id="admin-audit-table-body" class="divide-y divide-slate-800">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-slate-800/80 bg-slate-950/90 py-4 px-6 text-center text-xs text-slate-500">
+    <p>Agentic AI-Based Intelligent Blood Donor Coordination System &bull; Zero-Dependency Standalone Browser Emulation</p>
+  </footer>
+
+  <!-- ============================================================== -->
+  <!-- JAVASCRIPT ENGINE & AUTONOMOUS AI AGENT ORCHESTRATION          -->
+  <!-- ============================================================== -->
+  <script>
+    // --- 1. INITIAL SEED DATA (Tamil Nadu, India Network) ---
+    const DEFAULT_DATA = {
+      settings: {
+        timeout: 30,
+        weights: { distance: 40, reliability: 30, recency: 30 }
+      },
+      hospitals: [
+        { id: 'rggh', name: 'Rajiv Gandhi Govt General Hospital', city: 'Chennai', lat: 13.0798, lng: 80.2818 },
+        { id: 'apollo', name: 'Apollo Hospital, Greams Road', city: 'Chennai', lat: 13.0573, lng: 80.2520 },
+        { id: 'cmc', name: 'Christian Medical College (CMC)', city: 'Vellore', lat: 12.9254, lng: 79.1352 },
+        { id: 'cmch', name: 'Coimbatore Medical College Hospital', city: 'Coimbatore', lat: 11.0055, lng: 76.9661 },
+        { id: 'rajaji', name: 'Govt Rajaji Hospital', city: 'Madurai', lat: 9.9252, lng: 78.1198 }
+      ],
+      bloodBanks: [
+        {
+          id: 'bloodbank1',
+          name: 'Chennai Red Cross Blood Bank',
+          city: 'Chennai (Egmore)',
+          lat: 13.0732,
+          lng: 80.2609,
+          inventory: { 'O+': 4, 'O-': 1, 'A+': 8, 'A-': 0, 'B+': 12, 'B-': 2, 'AB+': 2, 'AB-': 0 }
+        },
+        {
+          id: 'ttk_bank',
+          name: 'Rotary Central TTK Blood Bank',
+          city: 'Chennai (T. Nagar)',
+          lat: 13.0418,
+          lng: 80.2505,
+          inventory: { 'O+': 0, 'O-': 2, 'A+': 5, 'A-': 1, 'B+': 6, 'B-': 0, 'AB+': 4, 'AB-': 1 }
+        },
+        {
+          id: 'lions_bank',
+          name: 'Lions Blood Bank',
+          city: 'Chennai',
+          lat: 13.0601,
+          lng: 80.2405,
+          inventory: { 'O+': 2, 'O-': 0, 'A+': 10, 'A-': 0, 'B+': 4, 'B-': 1, 'AB+': 1, 'AB-': 0 }
+        },
+        {
+          id: 'coimbatore_bank',
+          name: 'Coimbatore City Blood Center',
+          city: 'Coimbatore',
+          lat: 11.0168,
+          lng: 76.9558,
+          inventory: { 'O+': 5, 'O-': 1, 'A+': 6, 'A-': 2, 'B+': 9, 'B-': 1, 'AB+': 3, 'AB-': 0 }
+        }
+      ],
+      donors: [
+        { id: 'johndoe', name: 'John Doe', bloodGroup: 'O+', lat: 13.0827, lng: 80.2707, loc: 'Chennai Central', daysSinceLast: 75, reliability: 95, phone: '+91 98765 43210' },
+        { id: 'priya_s', name: 'Priya Sundaram', bloodGroup: 'O+', lat: 13.0418, lng: 80.2341, loc: 'T. Nagar, Chennai', daysSinceLast: 90, reliability: 92, phone: '+91 98765 43211' },
+        { id: 'karthik_r', name: 'Karthik Rajan', bloodGroup: 'O+', lat: 13.0850, lng: 80.2101, loc: 'Anna Nagar, Chennai', daysSinceLast: 62, reliability: 88, phone: '+91 98765 43212' },
+        { id: 'ananya_i', name: 'Ananya Iyer', bloodGroup: 'A+', lat: 12.9759, lng: 80.2212, loc: 'Velachery, Chennai', daysSinceLast: 110, reliability: 98, phone: '+91 98765 43213' },
+        { id: 'rajesh_k', name: 'Rajesh Kumar', bloodGroup: 'B+', lat: 13.0012, lng: 80.2565, loc: 'Adyar, Chennai', daysSinceLast: 38, reliability: 94, phone: '+91 98765 43214' }, // Ineligible (<56d)
+        { id: 'divya_m', name: 'Divya Murugan', bloodGroup: 'AB+', lat: 13.0067, lng: 80.2025, loc: 'Guindy, Chennai', daysSinceLast: 80, reliability: 85, phone: '+91 98765 43215' },
+        { id: 'suresh_r', name: 'Suresh Raman', bloodGroup: 'O-', lat: 13.0339, lng: 80.2676, loc: 'Mylapore, Chennai', daysSinceLast: 68, reliability: 96, phone: '+91 98765 43216' },
+        { id: 'vikram_s', name: 'Dr. Vikram Seth', bloodGroup: 'B-', lat: 13.0784, lng: 80.2435, loc: 'Kilpauk, Chennai', daysSinceLast: 104, reliability: 91, phone: '+91 98765 43217' },
+        { id: 'meena_m', name: 'Meenakshi Sundaram', bloodGroup: 'A-', lat: 9.9200, lng: 78.1200, loc: 'Madurai City', daysSinceLast: 125, reliability: 89, phone: '+91 98765 43218' }
+      ],
+      dispatches: [],
+      auditLogs: []
+    };
+
+    // --- 2. STATE INITIALIZATION ---
+    let appState = null;
+    function loadState() {
+      const stored = localStorage.getItem('agentic_blood_state');
+      if (stored) {
+        try {
+          appState = JSON.parse(stored);
+        } catch (e) {
+          appState = JSON.parse(JSON.stringify(DEFAULT_DATA));
+        }
+      } else {
+        appState = JSON.parse(JSON.stringify(DEFAULT_DATA));
+        saveState();
+      }
+    }
+    function saveState() {
+      localStorage.setItem('agentic_blood_state', JSON.stringify(appState));
+    }
+    function resetDemoData() {
+      if (confirm('Reset all demo data back to default Tamil Nadu network state?')) {
+        localStorage.removeItem('agentic_blood_state');
+        loadState();
+        initUI();
+        logToTerminal('[SYSTEM] Demo data reset to initial baseline state.', 'info');
+      }
+    }
+
+    // --- 3. BLOOD COMPATIBILITY MATRIX ---
+    const COMPATIBILITY = {
+      'O-': ['O-'],
+      'O+': ['O+', 'O-'],
+      'A-': ['A-', 'O-'],
+      'A+': ['A+', 'A-', 'O+', 'O-'],
+      'B-': ['B-', 'O-'],
+      'B+': ['B+', 'B-', 'O+', 'O-'],
+      'AB-': ['AB-', 'A-', 'B-', 'O-'],
+      'AB+': ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+']
+    };
+
+    // Haversine formula
+    function getDistanceKm(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return Math.round((R * c) * 10) / 10;
+    }
+
+    // --- 4. MAP INITIALIZATION ---
+    let leafletMap = null;
+    let mapMarkers = [];
+    let routingPolyline = null;
+
+    function initMap() {
+      if (leafletMap) return;
+      // Default centered on Chennai
+      leafletMap = L.map('map').setView([13.06, 80.25], 11);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 18
+      }).addTo(leafletMap);
+
+      renderMapMarkers();
+    }
+
+    function renderMapMarkers() {
+      if (!leafletMap) return;
+      mapMarkers.forEach(m => leafletMap.removeLayer(m));
+      mapMarkers = [];
+
+      // Add Hospitals
+      appState.hospitals.forEach(h => {
+        const icon = L.divIcon({
+          html: `<div style="background:#dc2626; color:white; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid white; box-shadow:0 0 10px rgba(220,38,38,0.8);"><i class="fa-solid fa-hospital text-xs"></i></div>`,
+          className: 'custom-pin',
+          iconSize: [28, 28]
+        });
+        const m = L.marker([h.lat, h.lng], { icon }).addTo(leafletMap)
+          .bindPopup(`<strong>${h.name}</strong><br><span style="font-size:11px; color:#9ca3af;">${h.city}</span>`);
+        mapMarkers.push(m);
+      });
+
+      // Add Blood Banks
+      appState.bloodBanks.forEach(b => {
+        const icon = L.divIcon({
+          html: `<div style="background:#0284c7; color:white; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid white;"><i class="fa-solid fa-boxes-stacked text-xs"></i></div>`,
+          className: 'custom-pin',
+          iconSize: [26, 26]
+        });
+        const m = L.marker([b.lat, b.lng], { icon }).addTo(leafletMap)
+          .bindPopup(`<strong>${b.name}</strong><br><span style="font-size:11px; color:#9ca3af;">Stock Roster Node</span>`);
+        mapMarkers.push(m);
+      });
+
+      // Add Donors
+      appState.donors.forEach(d => {
+        const isEligible = d.daysSinceLast >= 56;
+        const bg = isEligible ? '#10b981' : '#f59e0b';
+        const icon = L.divIcon({
+          html: `<div style="background:${bg}; color:white; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid white; font-weight:bold; font-size:10px;">${d.bloodGroup}</div>`,
+          className: 'custom-pin',
+          iconSize: [24, 24]
+        });
+        const m = L.marker([d.lat, d.lng], { icon }).addTo(leafletMap)
+          .bindPopup(`<strong>${d.name} (${d.bloodGroup})</strong><br>Reliability: ${d.reliability}%<br>Last Donated: ${d.daysSinceLast}d ago`);
+        mapMarkers.push(m);
+      });
+    }
+
+    function drawRoute(fromLat, fromLng, toLat, toLng, label = 'Active Routing Path') {
+      if (!leafletMap) return;
+      if (routingPolyline) {
+        leafletMap.removeLayer(routingPolyline);
+      }
+      const latlngs = [
+        [fromLat, fromLng],
+        [toLat, toLng]
+      ];
+      routingPolyline = L.polyline(latlngs, {
+        color: '#ef4444',
+        weight: 4,
+        dashArray: '8, 8',
+        opacity: 0.9
+      }).addTo(leafletMap);
+
+      leafletMap.fitBounds(routingPolyline.getBounds(), { padding: [50, 50] });
+    }
+
+    function clearRoute() {
+      if (routingPolyline && leafletMap) {
+        leafletMap.removeLayer(routingPolyline);
+        routingPolyline = null;
+      }
+    }
+
+    // --- 5. LOGGING & TERMINAL ---
+    function logToTerminal(message, type = 'info', reasoning = null) {
+      const term = document.getElementById('ai-terminal-output');
+      const time = new Date().toLocaleTimeString();
+      let colorClass = 'text-slate-300';
+      let tag = '[INFO]';
+
+      if (type === 'action') {
+        colorClass = 'text-amber-400 font-semibold';
+        tag = '[AI ACTION]';
+      } else if (type === 'success') {
+        colorClass = 'text-emerald-400 font-semibold';
+        tag = '[SUCCESS]';
+      } else if (type === 'warning') {
+        colorClass = 'text-rose-400 font-semibold';
+        tag = '[FAILOVER]';
+      } else if (type === 'reasoning') {
+        colorClass = 'text-cyan-400';
+        tag = '[REASONING]';
+      }
+
+      const logRow = document.createElement('div');
+      logRow.className = `${colorClass} leading-tight`;
+      logRow.innerHTML = `<span class="text-slate-500 font-normal">[${time}]</span> <span class="font-bold">${tag}</span> ${message}`;
+      
+      if (reasoning) {
+        const reasoningDiv = document.createElement('div');
+        reasoningDiv.className = 'text-slate-400 text-[11px] pl-4 italic border-l border-slate-700 ml-2 mt-0.5';
+        reasoningDiv.innerText = `↳ Reasoning: ${reasoning}`;
+        logRow.appendChild(reasoningDiv);
+      }
+
+      term.appendChild(logRow);
+      term.scrollTop = term.scrollHeight;
+
+      // Add to audit trail
+      appState.auditLogs.unshift({
+        timestamp: new Date().toISOString(),
+        actor: 'Autonomous Agent',
+        action: tag,
+        details: message
+      });
+      saveState();
+      renderAuditTable();
+    }
+
+    function clearTerminalLogs() {
+      document.getElementById('ai-terminal-output').innerHTML = `
+        <div class="text-slate-500">[SYSTEM] Terminal logs cleared. Autonomous agent monitoring active.</div>
+      `;
+    }
+
+    // --- 6. ROLE SWITCHING & PRESETS ---
+    let currentRole = 'hospital';
+
+    function switchRole(role) {
+      currentRole = role;
+      
+      // Update UI Tabs
+      ['hospital', 'donor', 'bloodbank', 'admin'].forEach(r => {
+        const btn = document.getElementById(`role-btn-${r}`);
+        const view = document.getElementById(`view-${r}`);
+        if (r === role) {
+          btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 bg-red-600 text-white shadow-sm shadow-red-700/50';
+          view.classList.remove('hidden');
+        } else {
+          btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 text-slate-400 hover:text-white hover:bg-slate-800';
+          view.classList.add('hidden');
+        }
+      });
+
+      // Update Top context banner
+      const userDisplay = document.getElementById('current-user-display');
+      const roleBadge = document.getElementById('current-role-badge');
+      
+      if (role === 'hospital') {
+        userDisplay.innerText = 'Rajiv Gandhi Govt General Hospital (Chennai)';
+        roleBadge.innerText = 'HOSPITAL DISPATCHER';
+        roleBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-950 text-red-400 border border-red-800';
+      } else if (role === 'donor') {
+        userDisplay.innerText = 'John Doe (Chennai Central - O+ Roster Donor)';
+        roleBadge.innerText = 'VOLUNTARY DONOR';
+        roleBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-950 text-emerald-400 border border-emerald-800';
+      } else if (role === 'bloodbank') {
+        userDisplay.innerText = 'Chennai Red Cross Blood Bank (Egmore)';
+        roleBadge.innerText = 'BLOOD BANK INVENTORY';
+        roleBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-950 text-blue-400 border border-blue-800';
+      } else if (role === 'admin') {
+        userDisplay.innerText = 'System Administrator';
+        roleBadge.innerText = 'AI GOVERNANCE & AUDIT';
+        roleBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-950 text-purple-400 border border-purple-800';
+      }
+
+      if (role === 'hospital') {
+        setTimeout(() => {
+          if (leafletMap) leafletMap.invalidateSize();
+        }, 100);
+      }
+    }
+
+    // --- 7. AUTONOMOUS AI AGENT COORDINATION FLOW ---
+    let activeTicket = null;
+    let countdownInterval = null;
+    let remainingSeconds = 30;
+
+    function handleCreateRequest(e) {
+      e.preventDefault();
+      
+      const hospId = document.getElementById('req-hospital').value;
+      const bloodGroup = document.getElementById('req-blood-group').value;
+      const units = parseInt(document.getElementById('req-units').value, 10);
+      const urgency = document.querySelector('input[name="urgency"]:checked').value;
+      
+      const hospitalObj = appState.hospitals.find(h => h.id === hospId);
+
+      const ticket = {
+        id: 'TKT-' + Math.floor(1000 + Math.random() * 9000),
+        hospitalId: hospId,
+        hospitalName: hospitalObj.name,
+        hospitalLat: hospitalObj.lat,
+        hospitalLng: hospitalObj.lng,
+        bloodGroup: bloodGroup,
+        unitsRequired: units,
+        urgency: urgency,
+        status: 'pending',
+        timestamp: new Date().toISOString(),
+        candidateList: [],
+        currentCandidateIndex: 0,
+        activeCandidate: null,
+        failedCandidates: []
+      };
+
+      activeTicket = ticket;
+      appState.dispatches.unshift(ticket);
+      saveState();
+
+      logToTerminal(`New emergency blood request dispatched by ${hospitalObj.name}: ${units} units of ${bloodGroup} [${urgency.toUpperCase()}].`, 'action');
+
+      // Kick off autonomous agent workflow!
+      executeAIAgentWorkflow();
+    }
+
+    function executeAIAgentWorkflow() {
+      if (!activeTicket) return;
+
+      updateWorkflowStepper(1);
+      updateActiveCardUI('Initializing Autonomous Dispatch...', 'Analyzing hospital location & urgency.');
+
+      // STEP 1: Inventory Sweep
+      setTimeout(() => {
+        runInventoryRosterCheck();
+      }, 1000);
+    }
+
+    // Agent Sub-Routine: Sweep Blood Bank Inventories
+    function runInventoryRosterCheck() {
+      updateWorkflowStepper(2);
+      logToTerminal(`[AGENT: InventorySweep] Scanning nearby blood banks for compatible stocks of ${activeTicket.bloodGroup}...`, 'reasoning', 'Prioritize bank reserves before contacting roster donors to prevent donor burnout.');
+
+      const compatibleGroups = COMPATIBILITY[activeTicket.bloodGroup] || [activeTicket.bloodGroup];
+      let reservedBank = null;
+      let matchedGroup = null;
+
+      // Find nearest blood bank with stock
+      for (const bank of appState.bloodBanks) {
+        for (const grp of compatibleGroups) {
+          if (bank.inventory[grp] >= activeTicket.unitsRequired) {
+            reservedBank = bank;
+            matchedGroup = grp;
+            break;
+          }
+        }
+        if (reservedBank) break;
+      }
+
+      if (reservedBank) {
+        // MATCH FOUND IN INVENTORY!
+        reservedBank.inventory[matchedGroup] -= activeTicket.unitsRequired;
+        activeTicket.status = 'fulfilled';
+        activeTicket.fulfillmentType = `Blood Bank: ${reservedBank.name} (${matchedGroup})`;
+        saveState();
+
+        logToTerminal(`MATCH FOUND! Reserved ${activeTicket.unitsRequired} units of ${matchedGroup} from ${reservedBank.name}.`, 'success', `Sufficient stock on-site. Immediate ambulance transit authorized.`);
+        
+        drawRoute(activeTicket.hospitalLat, activeTicket.hospitalLng, reservedBank.lat, reservedBank.lng);
+        updateWorkflowStepper(5);
+        updateActiveCardUI(`Fulfilled via Inventory Reserve!`, `Units secured from ${reservedBank.name}. Transit active.`);
+        renderInventoryGrid();
+        renderDispatchesTable();
+        triggerSuccessCelebration();
+        return;
+      }
+
+      // INVENTORY EMPTY - ESCALATE TO VERIFIED DONOR ROSTER
+      logToTerminal(`Blood bank stocks insufficient for ${activeTicket.unitsRequired} units of ${activeTicket.bloodGroup}. Autonomously escalating to verified donor pool...`, 'action', 'Triggering multi-criteria candidate ranking algorithm.');
+      
+      runDonorRankingAndScoring();
+    }
+
+    // Agent Sub-Routine: Multi-Criteria Donor Ranking & Scoring
+    function runDonorRankingAndScoring() {
+      updateWorkflowStepper(3);
+
+      const compatibleGroups = COMPATIBILITY[activeTicket.bloodGroup] || [activeTicket.bloodGroup];
+      const Wd = appState.settings.weights.distance;
+      const Wr = appState.settings.weights.reliability;
+      const Wrc = appState.settings.weights.recency;
+
+      logToTerminal(`Evaluating compatibility & biological eligibility (last donation > 56 days)...`, 'reasoning');
+
+      // Filter eligible donors
+      const eligible = appState.donors.filter(d => {
+        const isCompatible = compatibleGroups.includes(d.bloodGroup);
+        const isRestPeriodOk = d.daysSinceLast >= 56;
+        return isCompatible && isRestPeriodOk && !activeTicket.failedCandidates.includes(d.id);
+      });
+
+      if (eligible.length === 0) {
+        activeTicket.status = 'unfulfilled';
+        saveState();
+        logToTerminal(`CRITICAL ALERT: No eligible roster donors currently available matching ${activeTicket.bloodGroup} criteria.`, 'warning');
+        updateActiveCardUI('No Candidates Available', 'All candidates exhausted or ineligible.');
+        renderDispatchesTable();
+        return;
+      }
+
+      // Compute Multi-Criteria Scores:
+      // Score = (Wd * DistScore) + (Wr * Reliability) + (Wrc * RecencyScore)
+      const scoredDonors = eligible.map(d => {
+        const distKm = getDistanceKm(activeTicket.hospitalLat, activeTicket.hospitalLng, d.lat, d.lng);
+        
+        // Closer gets higher score (100 at 0km, 0 at 50km)
+        const distScore = Math.max(0, 100 - (distKm * 2));
+        const relScore = d.reliability; // 0 - 100
+        const recScore = Math.min(100, Math.max(0, ((d.daysSinceLast - 56) / (180 - 56)) * 100)); // 56d -> 0, 180d -> 100
+
+        const compositeScore = Math.round(((Wd * distScore) + (Wr * relScore) + (Wrc * recScore)) / (Wd + Wr + Wrc));
+
+        return {
+          ...d,
+          distanceKm: distKm,
+          compositeScore: compositeScore
+        };
+      });
+
+      // Sort by score descending
+      scoredDonors.sort((a, b) => b.compositeScore - a.compositeScore);
+      activeTicket.candidateList = scoredDonors;
+      activeTicket.currentCandidateIndex = 0;
+
+      const top = scoredDonors[0];
+      logToTerminal(`Candidate ranking complete. Found ${scoredDonors.length} eligible donors. Top candidate: ${top.name} (Score: ${top.compositeScore}, Dist: ${top.distanceKm}km, Rel: ${top.reliability}%).`, 'info', `Formula: (${Wd}% Dist + ${Wr}% Rel + ${Wrc}% Recency).`);
+
+      initiateDonorOutreach();
+    }
+
+    // Agent Sub-Routine: Outreach & Escalation
+    function initiateDonorOutreach() {
+      updateWorkflowStepper(4);
+
+      const candidate = activeTicket.candidateList[activeTicket.currentCandidateIndex];
+      if (!candidate) {
+        logToTerminal(`All ranked candidate donors exhausted without response.`, 'warning');
+        activeTicket.status = 'unfulfilled';
+        saveState();
+        renderDispatchesTable();
+        return;
+      }
+
+      activeTicket.activeCandidate = candidate;
+      activeTicket.status = 'contacting_donors';
+      saveState();
+
+      logToTerminal(`Outreach notification dispatched to candidate #${activeTicket.currentCandidateIndex + 1}: ${candidate.name} (${candidate.bloodGroup}, ${candidate.phone}).`, 'action');
+      
+      drawRoute(activeTicket.hospitalLat, activeTicket.hospitalLng, candidate.lat, candidate.lng);
+
+      // Enable simulator buttons
+      document.getElementById('btn-force-accept').disabled = false;
+      document.getElementById('btn-force-decline').disabled = false;
+      document.getElementById('btn-simulate-timeout').disabled = false;
+
+      // Update Donor Mobile Push Alert
+      showDonorMobileNotification(candidate);
+
+      // Start countdown
+      remainingSeconds = appState.settings.timeout || 30;
+      updateActiveCardUI(`Awaiting Response from ${candidate.name}...`, `Blood Group: ${candidate.bloodGroup} &bull; Distance: ${candidate.distanceKm} km &bull; Score: ${candidate.compositeScore}/100`);
+
+      if (countdownInterval) clearInterval(countdownInterval);
+      updateCountdownDisplay();
+
+      countdownInterval = setInterval(() => {
+        remainingSeconds--;
+        updateCountdownDisplay();
+        if (remainingSeconds <= 0) {
+          clearInterval(countdownInterval);
+          handleTimeoutEscalation();
+        }
+      }, 1000);
+    }
+
+    function updateCountdownDisplay() {
+      const timerDisplay = document.getElementById('countdown-timer-display');
+      const progressBar = document.getElementById('timeout-progress-bar');
+      const maxSeconds = appState.settings.timeout || 30;
+
+      if (timerDisplay) {
+        timerDisplay.innerText = `${remainingSeconds}s remaining`;
+      }
+      if (progressBar) {
+        const pct = ((maxSeconds - remainingSeconds) / maxSeconds) * 100;
+        progressBar.style.width = `${pct}%`;
+      }
+    }
+
+    // TIMEOUT ESCALATION HANDLER
+    function handleTimeoutEscalation() {
+      if (!activeTicket || !activeTicket.activeCandidate) return;
+
+      const timedOutDonor = activeTicket.activeCandidate;
+      logToTerminal(`Donor ${timedOutDonor.name} failed to respond within ${appState.settings.timeout}s timeout window.`, 'warning', `Penalizing reliability score by -5% due to non-response.`);
+
+      // Penalize reliability
+      timedOutDonor.reliability = Math.max(50, timedOutDonor.reliability - 5);
+      const donorInState = appState.donors.find(d => d.id === timedOutDonor.id);
+      if (donorInState) donorInState.reliability = timedOutDonor.reliability;
+
+      activeTicket.failedCandidates.push(timedOutDonor.id);
+      activeTicket.currentCandidateIndex++;
+      saveState();
+
+      // Clear route
+      clearRoute();
+
+      // Advance to candidate #2
+      logToTerminal(`Adaptive Failover: Immediately escalating to next candidate on the ranking roster...`, 'action');
+      setTimeout(() => {
+        initiateDonorOutreach();
+      }, 1200);
+    }
+
+    // SIMULATE FORCE DECLINE
+    function simulateForceDecline() {
+      if (countdownInterval) clearInterval(countdownInterval);
+      if (!activeTicket || !activeTicket.activeCandidate) return;
+
+      const donor = activeTicket.activeCandidate;
+      logToTerminal(`Donor ${donor.name} actively declined the emergency dispatch.`, 'warning', `Applying standard -3% reliability decay and advancing roster.`);
+
+      donor.reliability = Math.max(50, donor.reliability - 3);
+      const donorInState = appState.donors.find(d => d.id === donor.id);
+      if (donorInState) donorInState.reliability = donor.reliability;
+
+      activeTicket.failedCandidates.push(donor.id);
+      activeTicket.currentCandidateIndex++;
+      saveState();
+
+      clearRoute();
+      hideDonorMobileNotification();
+
+      logToTerminal(`Escalating autonomously to Candidate #${activeTicket.currentCandidateIndex + 1}...`, 'action');
+      setTimeout(() => {
+        initiateDonorOutreach();
+      }, 1200);
+    }
+
+    // SIMULATE TIMEOUT BUTTON
+    function simulateTimeout() {
+      if (countdownInterval) clearInterval(countdownInterval);
+      handleTimeoutEscalation();
+    }
+
+    // SIMULATE FORCE ACCEPT
+    function simulateForceAccept() {
+      if (countdownInterval) clearInterval(countdownInterval);
+      if (!activeTicket || !activeTicket.activeCandidate) return;
+
+      const candidate = activeTicket.activeCandidate;
+      activeTicket.status = 'donor_accepted';
+      saveState();
+
+      logToTerminal(`CONFIRMED: ${candidate.name} has accepted emergency dispatch! Candidate is in transit to ${activeTicket.hospitalName}.`, 'success');
+
+      // Disable simulator buttons
+      document.getElementById('btn-force-accept').disabled = true;
+      document.getElementById('btn-force-decline').disabled = true;
+      document.getElementById('btn-simulate-timeout').disabled = true;
+
+      hideDonorMobileNotification();
+      updateWorkflowStepper(5);
+      updateActiveCardUI(`Donor ${candidate.name} In Transit!`, `Expected Arrival: ~${Math.round(candidate.distanceKm * 3)} mins &bull; Awaiting Clinical Screening.`);
+
+      // Reveal Clinical Screening Panel
+      const screeningPanel = document.getElementById('clinical-screening-panel');
+      if (screeningPanel) {
+        screeningPanel.classList.remove('hidden');
+      }
+
+      renderDispatchesTable();
+    }
+
+    // CLINICAL SCREENING APPROVAL
+    function approveScreening() {
+      if (!activeTicket || !activeTicket.activeCandidate) return;
+      const candidate = activeTicket.activeCandidate;
+
+      activeTicket.status = 'fulfilled';
+      activeTicket.fulfillmentType = `Verified Donor: ${candidate.name} (${candidate.bloodGroup})`;
+      
+      // Update donor stats
+      const donorInState = appState.donors.find(d => d.id === candidate.id);
+      if (donorInState) {
+        donorInState.daysSinceLast = 0;
+        donorInState.reliability = Math.min(100, donorInState.reliability + 2); // Boost reliability for successful completion
+      }
+
+      saveState();
+
+      logToTerminal(`CLINICAL VALIDATION PASSED: Hemoglobin 13.8 g/dL verified. Blood donation completed successfully!`, 'success');
+      
+      document.getElementById('clinical-screening-panel').classList.add('hidden');
+      updateActiveCardUI(`Ticket ${activeTicket.id} Fulfilled!`, `Donation completed by ${candidate.name}.`);
+      
+      renderDispatchesTable();
+      renderAdminDonorsTable();
+      triggerSuccessCelebration();
+    }
+
+    // CLINICAL SCREENING FAILURE (LOW HEMOGLOBIN)
+    function failScreening() {
+      if (!activeTicket || !activeTicket.activeCandidate) return;
+      const candidate = activeTicket.activeCandidate;
+
+      logToTerminal(`CLINICAL SCREENING REJECTED: Low Hemoglobin (<12.5 g/dL). Donor ${candidate.name} is medically deferred for patient safety.`, 'warning', `Autonomous loop restart initiated for next candidate.`);
+
+      document.getElementById('clinical-screening-panel').classList.add('hidden');
+      
+      activeTicket.failedCandidates.push(candidate.id);
+      activeTicket.currentCandidateIndex++;
+      saveState();
+
+      clearRoute();
+
+      // Loop restart
+      setTimeout(() => {
+        initiateDonorOutreach();
+      }, 1500);
+    }
+
+    function triggerSuccessCelebration() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }
+    }
+
+    // --- 8. UI HELPERS & RENDERING ---
+    function updateWorkflowStepper(activeStep) {
+      for (let i = 1; i <= 5; i++) {
+        const node = document.getElementById(`step-node-${i}`);
+        if (!node) continue;
+        if (i < activeStep) {
+          node.className = 'w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center mx-auto mb-1 font-bold text-xs shadow-sm shadow-emerald-700';
+          node.innerHTML = '<i class="fa-solid fa-check text-[10px]"></i>';
+        } else if (i === activeStep) {
+          node.className = 'w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center mx-auto mb-1 font-bold text-xs ring-4 ring-red-950';
+          node.innerText = i;
+        } else {
+          node.className = 'w-6 h-6 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center mx-auto mb-1 border border-slate-700 font-bold text-xs';
+          node.innerText = i;
+        }
+      }
+    }
+
+    function updateActiveCardUI(title, subtitle) {
+      const nameEl = document.getElementById('active-target-name');
+      const descEl = document.getElementById('active-target-desc');
+      const badge = document.getElementById('active-status-badge');
+
+      if (nameEl) nameEl.innerText = title;
+      if (descEl) descEl.innerHTML = subtitle;
+      if (badge && activeTicket) {
+        badge.innerText = activeTicket.status.replace('_', ' ');
+        if (activeTicket.status === 'fulfilled') {
+          badge.className = 'px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-950 text-emerald-400 border border-emerald-800';
+        } else if (activeTicket.status === 'contacting_donors') {
+          badge.className = 'px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-950 text-amber-400 border border-amber-800 animate-pulse';
+        } else {
+          badge.className = 'px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-red-950 text-red-400 border border-red-800';
+        }
+      }
+    }
+
+    function showDonorMobileNotification(candidate) {
+      const notifPill = document.getElementById('donor-notif-pill');
+      const alertBox = document.getElementById('donor-incoming-alert');
+      const noAlertBox = document.getElementById('donor-no-alert');
+
+      if (notifPill) notifPill.classList.remove('hidden');
+      if (alertBox) alertBox.classList.remove('hidden');
+      if (noAlertBox) noAlertBox.classList.add('hidden');
+
+      const dist = candidate.distanceKm || '2.4';
+      document.getElementById('donor-alert-distance').innerText = `${dist} km (~${Math.round(dist * 3)} mins)`;
+    }
+
+    function hideDonorMobileNotification() {
+      const notifPill = document.getElementById('donor-notif-pill');
+      const alertBox = document.getElementById('donor-incoming-alert');
+      const noAlertBox = document.getElementById('donor-no-alert');
+
+      if (notifPill) notifPill.classList.add('hidden');
+      if (alertBox) alertBox.classList.add('hidden');
+      if (noAlertBox) noAlertBox.classList.remove('hidden');
+    }
+
+    function renderDispatchesTable() {
+      const tbody = document.getElementById('dispatches-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (appState.dispatches.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-500">No emergency dispatches logged yet. Trigger one above!</td></tr>`;
+        return;
+      }
+
+      document.getElementById('ticket-count-badge').innerText = `${appState.dispatches.length} Total`;
+
+      appState.dispatches.forEach(d => {
+        let statusBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-800 text-slate-400">Pending</span>';
+        if (d.status === 'fulfilled') {
+          statusBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-950 text-emerald-400 border border-emerald-800">Fulfilled</span>';
+        } else if (d.status === 'contacting_donors') {
+          statusBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-950 text-amber-400 border border-amber-800">Outreach</span>';
+        } else if (d.status === 'donor_accepted') {
+          statusBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-teal-950 text-teal-400 border border-teal-800">Accepted</span>';
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-950/40 transition';
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-mono font-bold text-white">${d.id}</td>
+          <td class="py-3 px-4 font-medium">${d.hospitalName}</td>
+          <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-red-950 text-red-400 font-bold border border-red-800">${d.bloodGroup}</span></td>
+          <td class="py-3 px-4 font-bold text-white">${d.unitsRequired}</td>
+          <td class="py-3 px-4 uppercase font-bold text-[10px] ${d.urgency === 'critical' ? 'text-red-400' : 'text-amber-400'}">${d.urgency}</td>
+          <td class="py-3 px-4 text-slate-300">${d.fulfillmentType || 'Autonomous Search...'}</td>
+          <td class="py-3 px-4">${statusBadge}</td>
+          <td class="py-3 px-4 text-slate-500 text-[11px]">${new Date(d.timestamp).toLocaleTimeString()}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderInventoryGrid() {
+      const container = document.getElementById('inventory-grid');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const bank = appState.bloodBanks[0]; // Primary Egmore Red Cross
+      let total = 0;
+
+      Object.entries(bank.inventory).forEach(([grp, count]) => {
+        total += count;
+        const card = document.createElement('div');
+        card.className = 'bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between';
+        card.innerHTML = `
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-base font-heading font-black text-white px-2.5 py-0.5 bg-red-950 text-red-400 rounded-lg border border-red-800">${grp}</span>
+            <span class="text-xs font-semibold ${count > 0 ? 'text-emerald-400' : 'text-rose-400'}">${count > 0 ? 'In Stock' : 'Depleted'}</span>
+          </div>
+          <div class="flex items-baseline justify-between mt-1">
+            <span class="text-2xl font-heading font-extrabold text-white">${count}</span>
+            <span class="text-xs text-slate-400">units</span>
+          </div>
+          <div class="flex gap-1.5 mt-3 pt-2 border-t border-slate-800/80">
+            <button onclick="adjustInventory('${grp}', -1)" class="flex-1 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-bold transition">-</button>
+            <button onclick="adjustInventory('${grp}', 1)" class="flex-1 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-bold transition">+</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      document.getElementById('total-inventory-units').innerText = total;
+    }
+
+    function adjustInventory(group, delta) {
+      const bank = appState.bloodBanks[0];
+      bank.inventory[group] = Math.max(0, bank.inventory[group] + delta);
+      saveState();
+      renderInventoryGrid();
+      logToTerminal(`Manual inventory update for ${bank.name}: ${group} now at ${bank.inventory[group]} units.`, 'info');
+    }
+
+    function renderAdminDonorsTable() {
+      const tbody = document.getElementById('admin-donors-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      appState.donors.forEach(d => {
+        const isEligible = d.daysSinceLast >= 56;
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-950/40 transition';
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-bold text-white">${d.name}</td>
+          <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-red-950 text-red-400 font-bold border border-red-800">${d.bloodGroup}</span></td>
+          <td class="py-3 px-4 text-slate-300">${d.loc}</td>
+          <td class="py-3 px-4 font-bold text-emerald-400">${d.reliability}%</td>
+          <td class="py-3 px-4 text-slate-300">${d.daysSinceLast} days ago</td>
+          <td class="py-3 px-4">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isEligible ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}">
+              ${isEligible ? 'Eligible (>56d)' : 'Ineligible (<56d)'}
+            </span>
+          </td>
+          <td class="py-3 px-4 font-mono text-[11px] text-slate-400">${d.phone}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderAuditTable() {
+      const tbody = document.getElementById('admin-audit-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      appState.auditLogs.slice(0, 30).forEach(log => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-950/40 text-[11px]';
+        tr.innerHTML = `
+          <td class="py-2 px-4 text-slate-500 font-mono">${new Date(log.timestamp).toLocaleTimeString()}</td>
+          <td class="py-2 px-4 font-semibold text-slate-300">${log.actor}</td>
+          <td class="py-2 px-4 font-bold text-teal-400">${log.action}</td>
+          <td class="py-2 px-4 text-slate-300">${log.details}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function clearAuditTrail() {
+      appState.auditLogs = [];
+      saveState();
+      renderAuditTable();
+    }
+
+    // --- 9. WEIGHT & ALGORITHM SETTINGS ---
+    function updateWeightDisplay() {
+      const wd = document.getElementById('input-wd').value;
+      const wr = document.getElementById('input-wr').value;
+      const wrc = document.getElementById('input-wrc').value;
+
+      document.getElementById('label-wd').innerText = `${wd}%`;
+      document.getElementById('label-wr').innerText = `${wr}%`;
+      document.getElementById('label-wrc').innerText = `${wrc}%`;
+    }
+
+    function saveAlgorithmSettings() {
+      const wd = parseInt(document.getElementById('input-wd').value, 10);
+      const wr = parseInt(document.getElementById('input-wr').value, 10);
+      const wrc = parseInt(document.getElementById('input-wrc').value, 10);
+      const timeout = parseInt(document.getElementById('input-timeout').value, 10);
+
+      appState.settings.weights = { distance: wd, reliability: wr, recency: wrc };
+      appState.settings.timeout = timeout;
+      saveState();
+
+      document.getElementById('banner-timeout-val').innerText = `${timeout}s`;
+      logToTerminal(`AI Ranking weights updated: Distance=${wd}%, Reliability=${wr}%, Recency=${wrc}%. Timeout=${timeout}s.`, 'action');
+      alert('Algorithm settings saved successfully!');
+    }
+
+    // --- 10. INITIAL BOOTSTRAP ---
+    function initUI() {
+      loadState();
+      
+      // Sync settings to inputs
+      if (appState.settings) {
+        document.getElementById('input-wd').value = appState.settings.weights.distance;
+        document.getElementById('input-wr').value = appState.settings.weights.reliability;
+        document.getElementById('input-wrc').value = appState.settings.weights.recency;
+        document.getElementById('input-timeout').value = appState.settings.timeout;
+        document.getElementById('banner-timeout-val').innerText = `${appState.settings.timeout}s`;
+        updateWeightDisplay();
+      }
+
+      renderInventoryGrid();
+      renderDispatchesTable();
+      renderAdminDonorsTable();
+      renderAuditTable();
+      initMap();
+    }
+
+    // Run on load
+    window.addEventListener('DOMContentLoaded', () => {
+      initUI();
+    });
+  </script>
+</body>
+</html>

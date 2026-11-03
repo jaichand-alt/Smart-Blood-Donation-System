@@ -1,0 +1,19 @@
+{
+  "name": "agentic-blood-donor-coordinator",
+  "version": "1.0.0",
+  "description": "Agentic AI-Based Intelligent Blood Donor Coordination System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "serve": "node server.js"
+  },
+  "keywords": [
+    "blood-donation",
+    "agentic-ai",
+    "emergency-coordination",
+    "healthcare"
+  ],
+  "author": "",
+  "license": "MIT"
+}

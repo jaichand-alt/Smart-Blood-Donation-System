@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agentic AI Blood Donor Coordinator - Welcome</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #0b0f19;
+      --bg-panel: #111827;
+      --primary: #dc2626;
+      --primary-glow: rgba(220, 38, 38, 0.15);
+      --secondary: #0d9488;
+      --text-primary: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --border: rgba(255, 255, 255, 0.08);
+      --radius-lg: 12px;
+      --font-family: 'Inter', sans-serif;
+      --font-heading: 'Outfit', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-deep);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 700px;
+      width: 100%;
+    }
+
+    .card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .logo-container {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 60px;
+      height: 60px;
+      background: rgba(220, 38, 38, 0.1);
+      border-radius: 50%;
+      margin-bottom: 1rem;
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
+
+    .logo-icon {
+      font-size: 2rem;
+      color: var(--primary);
+    }
+
+    h1 {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #dc2626, #0d9488);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    .alert-box {
+      background: rgba(13, 148, 136, 0.1);
+      border: 1px solid rgba(13, 148, 136, 0.2);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 2rem;
+      font-size: 0.9rem;
+      color: #2dd4bf;
+    }
+
+    .alert-title {
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    h2 {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+
+    ol {
+      margin-left: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    li {
+      margin-bottom: 0.75rem;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    strong {
+      color: var(--text-primary);
+    }
+
+    .code-block {
+      background: #030712;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      font-family: monospace;
+      font-size: 0.85rem;
+      color: #34d399;
+      margin: 0.5rem 0;
+      overflow-x: auto;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.75rem 1.5rem;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.9rem;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 4px 12px var(--primary-glow);
+    }
+
+    .btn-primary:hover {
+      background: #b91c1c;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="header">
+        <div class="logo-container">
+          <span class="logo-icon">🩸</span>
+        </div>
+        <h1>ANTIGRAVITY BLOOD CO-OP</h1>
+        <p class="subtitle">Agentic AI Blood Donor Coordination System (React Version)</p>
+      </div>
+
+      <div class="alert-box">
+        <div class="alert-title">🚀 Centralized Database Enabled</div>
+        <p>You have switched from the client-side local storage HTML prototype to the full React client connected to the shared Express backend. Registrations from other systems will now show up on the Admin console.</p>
+      </div>
+
+      <h2>How to Run the Application</h2>
+      <ol>
+        <li>
+          <strong>Open a terminal</strong> in the project folder and start the services:
+          <div class="code-block">npm run dev</div>
+          This starts the Express backend (port 5000) and the Vite React frontend (port 3000) concurrently.
+        </li>
+        <li>
+          <strong>Access the app from any computer</strong> on the same network:
+          <ul>
+            <li>Vite Dev Server (recommended for development): <a href="http://localhost:3000" style="color: #2dd4bf;">http://localhost:3000</a></li>
+            <li>Express Server (serves React production build): <a href="http://localhost:5000" style="color: #2dd4bf;">http://localhost:5000</a></li>
+          </ul>
+        </li>
+      </ol>
+
+      <div class="button-group">
+        <a href="http://localhost:3000" class="btn btn-primary">Open React Client (Port 3000)</a>
+        <a href="http://localhost:5000" class="btn btn-secondary">Open Production Server (Port 5000)</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
